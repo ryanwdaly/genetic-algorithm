@@ -1,62 +1,91 @@
-// DNA = require("./DNA");
+Genome = require("./Genome");
 
-class Genome {
-    constructor(mutationRate, popSize, lifespan) {
+class Population {
+    constructor(target, mutationRate, popMax) {
+        this.target = target;
         this.mutationRate = mutationRate;
-        this.lifespan = lifespan;
-        this.popSize = popSize;
-        this.matingPool // ArrayList for the mating pool
-        this.stack = [];
+        this.popMax = popMax;
+        
+        this.population;// Array to hold current population 
+        this.matingPool; // ArrayList for the mating pool
+        this.totalGenerations = 0; // Number of generations
+        this.finished = false; // has the target been reached?
+        this.perfectScore = 1; 
+        
+        this.best = "";
 
-        for (let i = 0; i < this.popSize; i++) {
-            this .stack.push(new Genome(lifespan));
+        this.population = [];
+        for (let i = 0; i < this.popMax; i++) {
+            this.population.push(new Genome(this.target.length));
         }  
     }
-    evaluate() {
-        this.matingPool = [];
-        let maxfit = 0;
-        for (let i = 0; i < this.popSize; i++){
-            this.stack[i].calcFitness();
-            if (this.stack[i].fitness > maxfit) {
-                maxfit = this.stack[i].fitness
-            }
-        }
-        for (let i = 0; i < this.popSize; i++){
-            this.stack[i].fitness /= maxfit;
-        }
-        for (let i = 0; i < this.popSize; i++){
-            let n = this.stack[i].fitness * 100;
-            for (let j = 0; j < n; j++) {
-                this.matingPool.push(this.stack[i])
-            }
-        }
-    }
-    selection() {
-        // picks a random index in matingPool
-        let parentA = random(this.matingPool);
-        let parentB = random(this.matingPool);
-        let child = new Genome()
-        child.dna.genes = this.crossover(parentA, parentB);
-        child.dna.mutate(mutationRate);
-        return child;
-    }
-    generateNextGen() {
-        for (let i = 0; i < this.popSize; i++) {
-            this.stack[i] = this.selection();
-        }
-    }
-    crossover(partnerA, partnerB) {
-        let genes = [];
-        let midpoint = getRandomInt(0, this.lifespan);
 
-        for (let i = 0; i < this.lifespan; i++) {
-            if (i > midpoint) genes[i] = partnerA.dna.genes[i];
-            else genes[i] = partnerB.dna.genes[i];
+    isTargetMatch() {
+        for (let i = 0; i < this.population.length; i++) {
+            if (this.population[i].getPhrase() === this.target) {
+                return true;
+            }
         }
-        return genes;
     }
+
+    naturalSelection() {
+        this.matingPool = [];
+
+        var maxFitness = 0;
+        let maxFitnessIndex = 0;
+        for (let i = 0; i < this.population.length; i++) {
+            if (this.population[i].fitness > maxFitness) {
+                maxFitness = this.population[i].fitness;
+                maxFitnessIndex = i;
+            }
+        }
+        console.log(this.population[maxFitnessIndex].getPhrase())
+
+        for (let i = 0; i < this.population.length; i++) {
+            //map(value, start1, stop1, start2, stop2) for more standarization
+            var fitness = this.population[i].fitness / maxFitness;
+    
+            var n = Math.floor(fitness * 100);
+            for (let j = 0; j < n; j++) {
+                this.matingPool.push(this.population[i]);
+            }
+            
+        }
+    }
+
+    generate() {
+        this.totalGenerations += 1;
+        for (let i = 0; i < this.population.length; i++) {
+            let a = getRandomInt(0, this.matingPool.length);
+            let b = getRandomInt(0, this.matingPool.length);
+
+            let partnerA = this.matingPool[a];
+            let partnerB = this.matingPool[b];
+            let child = partnerA.crossover(this.target.length, partnerB);
+            child.mutate(this.mutationRate);
+            this.population[i] = child;
+        }
+    }
+    
+   
+
+   
+    calcFitness() {
+        for (let i = 0; i < this.population.length; i++) {
+            this.population[i].calcGeneFitness(this.target);
+        }
+    }
+
+
 }
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
+
+
+Population.prototype
+
+
+
+module.exports = Population;
